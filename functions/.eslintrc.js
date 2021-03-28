@@ -28,5 +28,6 @@ module.exports = {
 		"indent": [2, "tab"],
 		"no-tabs": 0,
 		"max-len": ["error", {"code": 150}],
+		"linebreak-style": 0,
 	},
 };

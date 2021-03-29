@@ -15,23 +15,27 @@ export default async (req:any, res:any) => {
 
 				if (await verify.verifySecret(payload, webpushsecret, hashRecieved)) {
 					if (req.headers["x-github-event"] === "push") {
-						let tweet:string="";
+						if (req.body.commits.length > 0) {
+							let tweet:string="";
 
-						req.body.commits.forEach((element:any) => {
-							tweet+="Commit Branch: "+req.body["ref"].split("refs/heads/")[1]+"\n";
-							tweet+="Commit ID: "+element["id"]+"\n";
-							tweet+="Commited By: "+element["committer"]["name"]+"\n";
-							tweet+="Commit Message: "+element["message"]+"\n";
-							tweet+="Commit Date Time: "+dateformat(new Date(element["timestamp"]), "dddd, mmmm dS, yyyy, h:MM:ss TT")+"\n\n";
-							tweet+="\n\nTo View more details of the commit please visit \n\n"+element["url"]+"\n";
-						});
+							req.body.commits.forEach((element:any) => {
+								tweet+="Commit Branch: "+req.body["ref"].split("refs/heads/")[1]+"\n";
+								tweet+="Commit ID: "+element["id"]+"\n";
+								tweet+="Commited By: "+element["committer"]["name"]+"\n";
+								tweet+="Commit Message: "+element["message"]+"\n";
+								tweet+="Commit Date Time: "+dateformat(new Date(element["timestamp"]), "dddd, mmmm dS, yyyy, h:MM:ss TT")+"\n\n";
+								tweet+="\n\nTo View more details of the commit please visit \n\n"+element["url"]+"\n";
+							});
 
-						const response=await tweetService.tweet(tweet);
+							const response=await tweetService.tweet(tweet);
 
-						if (response["status"]) {
-							res.status(200).json({status: "Processed Webhook", content: {tweetResponse: response["message"]}});
+							if (response["status"]) {
+								res.status(200).json({status: "Processed Webhook", content: {tweetResponse: response["message"]}});
+							} else {
+								res.status(500).json({status: "Unable To Tweet", content: {reason: response["message"]}});
+							}
 						} else {
-							res.status(500).json({status: "Unable To Tweet", content: {reason: response["message"]}});
+							res.status(404).json({status: "Invalid Webhook", content: {reason: "No Commits Available"}});
 						}
 					} else {
 						res.status(404).json({status: "Invalid Webhook", content: {reason: "Invalid x-github-event Event"}});

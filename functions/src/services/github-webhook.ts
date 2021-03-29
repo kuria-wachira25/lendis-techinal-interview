@@ -19,12 +19,11 @@ export default async (req:any, res:any) => {
 							let tweet:string="";
 
 							req.body.commits.forEach((element:any) => {
-								tweet+="Commit Branch: "+req.body["ref"].split("refs/heads/")[1]+"\n";
-								tweet+="Commit ID: "+element["id"]+"\n";
-								tweet+="Commited By: "+element["committer"]["name"]+"\n";
-								tweet+="Commit Message: "+element["message"]+"\n";
-								tweet+="Commit Date Time: "+dateformat(new Date(element["timestamp"]), "dddd, mmmm dS, yyyy, h:MM:ss TT")+"\n\n";
-								tweet+="\n\nTo View more details of the commit please visit \n\n"+element["url"]+"\n";
+								tweet+="Branch:"+req.body["ref"].split("refs/heads/")[1]+"\n";
+								tweet+="ID:"+element["id"]+"\n";
+								tweet+="By:"+element["committer"]["name"]+"\n";
+								tweet+="Message:"+element["message"]+"\n";
+								tweet+="Timestamp:"+dateformat(new Date(element["timestamp"]), "dddd, mmmm dS, yyyy, h:MM:ss TT")+"\n";
 							});
 
 							const response=await tweetService.tweet(tweet);

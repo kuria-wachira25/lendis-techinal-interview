@@ -10,6 +10,7 @@ module.exports = {
 		"plugin:import/warnings",
 		"plugin:import/typescript",
 		"google",
+		"ts-node",
 	],
 	parser: "@typescript-eslint/parser",
 	parserOptions: {

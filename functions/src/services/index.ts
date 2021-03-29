@@ -1,4 +1,4 @@
-import tweetGithubPush from "../services/tweet-github-push";
+import githubWebhook from "./github-webhook";
 import checkApiHealth from "../services/check-health";
 
-export {tweetGithubPush, checkApiHealth};
+export {githubWebhook, checkApiHealth};

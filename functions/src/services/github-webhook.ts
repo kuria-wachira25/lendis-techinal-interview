@@ -1,7 +1,7 @@
 import * as functions from "firebase-functions";
 import * as verify from "verify-github-webhook-secret";
-import * as Twitter from "twitter";
 import * as dateformat from "dateformat";
+import * as tweetService from "./tweet";
 
 export default async (req:any, res:any) => {
 	try {
@@ -26,20 +26,12 @@ export default async (req:any, res:any) => {
 							tweet+="\n\nTo View more details of the commit please visit \n\n"+element["url"]+"\n";
 						});
 
-						const twitterConfig:Twitter.AccessTokenOptions={
-							consumer_key: functions.config().twitter.consumerkey,
-							consumer_secret: functions.config().twitter.consumersecret,
-							access_token_key: functions.config().twitter.accesstoken,
-							access_token_secret: functions.config().twitter.accesstokensecret,
-						};
+						const response=await tweetService.tweet(tweet);
 
-						const client:Twitter = new Twitter(twitterConfig);
-
-						try {
-							const tweetResponse=await client.post("statuses/update", {status: tweet});
-							res.status(200).json({status: "Processed Webhook Successfully", content: {tweetResponse: tweetResponse}});
-						} catch (error) {
-							res.status(500).json({status: "Unable To Tweet Commit", content: {error: error.message}});
+						if (response["status"]) {
+							res.status(200).json({status: "Processed Webhook", content: {tweetResponse: response["message"]}});
+						} else {
+							res.status(500).json({status: "Unable To Tweet", content: {reason: response["message"]}});
 						}
 					} else {
 						res.status(404).json({status: "Invalid Webhook", content: {reason: "Invalid x-github-event Event"}});

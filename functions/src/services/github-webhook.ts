@@ -5,48 +5,36 @@ import * as tweetService from "./tweet";
 
 export default async (req:any, res:any) => {
 	try {
-		if (req.headers["x-hub-signature"]) {
-			if (req.headers["x-hub-signature"].includes("sha1=")) {
-				const payload:string=JSON.stringify(req.body);
+		if (req.headers["x-github-event"] === "push" && req.headers["x-hub-signature"] && req.headers["x-hub-signature"].includes("sha1=") ) {
+			const payload:string=JSON.stringify(req.body);
 
-				const webpushsecret:string=functions.config().github.webpushsecret;
+			const webpushsecret:string=functions.config().github.webpushsecret;
 
-				const hashRecieved:string=req.headers["x-hub-signature"];
+			const hashRecieved:string=req.headers["x-hub-signature"];
 
-				if (await verify.verifySecret(payload, webpushsecret, hashRecieved)) {
-					if (req.headers["x-github-event"] === "push") {
-						if (req.body.commits.length > 0) {
-							let tweet:string="";
+			if (await verify.verifySecret(payload, webpushsecret, hashRecieved)) {
+				let tweet:string="";
 
-							req.body.commits.forEach((element:any) => {
-								tweet+="Branch:"+req.body["ref"].split("refs/heads/")[1]+"\n";
-								tweet+="ID:"+element["id"]+"\n";
-								tweet+="By:"+element["committer"]["name"]+"\n";
-								tweet+="Message:"+element["message"]+"\n";
-								tweet+="Timestamp:"+dateformat(new Date(element["timestamp"]), "dddd, mmmm dS, yyyy, h:MM:ss TT")+"\n";
-							});
+				req.body.commits.forEach((element:any) => {
+					tweet+="Branch:"+req.body["ref"].split("refs/heads/")[1]+"\n";
+					tweet+="ID:"+element["id"]+"\n";
+					tweet+="By:"+element["committer"]["name"]+"\n";
+					tweet+="Message:"+element["message"]+"\n";
+					tweet+="Timestamp:"+dateformat(new Date(element["timestamp"]), "dddd, mmmm dS, yyyy, h:MM:ss TT")+"\n";
+				});
 
-							const response=await tweetService.tweet(tweet);
+				const response=await tweetService.tweet(tweet);
 
-							if (response["status"]) {
-								res.status(200).json({status: "Processed Webhook", content: {tweetResponse: response["message"]}});
-							} else {
-								res.status(500).json({status: "Unable To Tweet", content: {reason: response["message"]}});
-							}
-						} else {
-							res.status(404).json({status: "Invalid Webhook", content: {reason: "No Commits Available"}});
-						}
-					} else {
-						res.status(404).json({status: "Invalid Webhook", content: {reason: "Invalid x-github-event Event"}});
-					}
-				} else {
-					res.status(401).json({status: "Invalid Webhook", content: {reason: "Invalid x-hub-signature Signature"}});
+				if (response["status"]) {
+					res.status(200).json({status: "Processed Webhook", content: {tweetResponse: response["message"]}});
 				}
+
+				throw new Error("Unable To Tweet. Reason "+response["message"]);
 			} else {
-				res.status(404).json({status: "Invalid Webhook", content: {reason: "Malformed x-hub-signature header"}});
+				res.status(401).json({status: "Invalid Webhook", content: {reason: "Invalid x-hub-signature Signature"}});
 			}
 		} else {
-			res.status(404).json({status: "Invalid Webhook", content: {reason: "Missing x-hub-signature header"}});
+			res.status(404).json({status: "Invalid Webhook", content: {reason: "Invalid Paramaters Set"}});
 		}
 	} catch (error) {
 		res.status(500).json({status: "Unable To Process Request", content: {error: error.message}});

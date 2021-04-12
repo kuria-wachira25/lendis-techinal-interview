@@ -1,7 +1,12 @@
 import * as functions from "firebase-functions";
 import * as Twitter from "twitter";
 
-export const tweet=async (tweet:string) => {
+export interface TweetStatus {
+	status:boolean,
+	message:string
+}
+
+export const tweet=async (tweet:string):Promise<TweetStatus> => {
 	const twitterConfig:Twitter.AccessTokenOptions={
 		consumer_key: functions.config().twitter.consumerkey,
 		consumer_secret: functions.config().twitter.consumersecret,
@@ -9,10 +14,15 @@ export const tweet=async (tweet:string) => {
 		access_token_secret: functions.config().twitter.accesstokensecret,
 	};
 	const client:Twitter = new Twitter(twitterConfig);
+
+	let tweetStatus:TweetStatus;
+
 	try {
 		const message=await client.post("statuses/update", {status: tweet});
-		return {status: true, message: message};
+		tweetStatus={status: true, message: message.toString()};
 	} catch (error) {
-		return {status: false, message: error.message};
+		tweetStatus={status: false, message: error.message};
 	}
+
+	return tweetStatus;
 };
